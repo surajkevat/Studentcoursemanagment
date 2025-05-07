@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Course Management Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            background: linear-gradient(120deg, #f6d365 0%, #fda085 100%);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .main-wrapper {
+            max-width: 1100px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(60,60,60,0.15);
+            padding: 40px 30px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 32px;
+            letter-spacing: 2px;
+        }
+        .flex-row {
+            display: flex;
+            gap: 32px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .card {
+            background: #f9fafb;
+            border-radius: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            padding: 28px 22px 22px 22px;
+            min-width: 320px;
+            flex: 1 1 340px;
+            max-width: 400px;
+            margin-bottom: 16px;
+        }
+        .card h2 {
+            margin-top: 0;
+            color: #f76b1c;
+            font-size: 1.3em;
+            margin-bottom: 18px;
+            letter-spacing: 1px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            margin-bottom: 4px;
+            color: #444;
+            font-weight: 500;
+        }
+        input[type="text"], input[type="number"], input[type="date"] {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 7px;
+            margin-bottom: 8px;
+            font-size: 1em;
+            background: #fff;
+            transition: border 0.2s;
+        }
+        input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus {
+            border: 1.5px solid #f76b1c;
+            outline: none;
+        }
+        button {
+            background: linear-gradient(90deg, #f76b1c 0%, #fad961 100%);
+            color: #fff;
+            border: none;
+            border-radius: 7px;
+            padding: 10px 22px;
+            font-size: 1em;
+            font-weight: 600;
+            margin-top: 12px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(247,107,28,0.08);
+            transition: background 0.2s, transform 0.1s;
+        }
+        button:hover {
+            background: linear-gradient(90deg, #fad961 0%, #f76b1c 100%);
+            transform: translateY(-2px) scale(1.03);
+        }
+        #courses-list {
+            margin-top: 18px;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+        }
+        th {
+            background: #f76b1c;
+            color: #fff;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        tr:hover {
+            background: #ffe5c2;
+        }
+        @media (max-width: 900px) {
+            .flex-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            .card {
+                max-width: 100%;
+            }
+        }
+    </style>
+    <script>
+        async function getCourses() {
+            try {
+                const response = await fetch('/api/course');
+                if (!response.ok) throw new Error(`Failed to fetch courses: ${response.statusText}`);
+                const courses = await response.json();
+                const list = document.getElementById('courses-list');
+                if (!Array.isArray(courses) || courses.length === 0) {
+                    list.innerHTML = '<p style= "color:#888">No courses found.</p>';
+                    return;
+                }
+                let html = `<table>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Duration</th>
+                        <th>Description</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Instructor</th>
+                        <th>Fee</th>
+                        <th>Max Students</th>
+                        <th>Category</th>
+                    </tr>`;
+                courses.forEach(c => {
+                    html += `<tr>
+                        <td>${c.courseId !== undefined && c.courseId !== null ? c.courseId : ''}</td>
+                        <td>${c.courseName !== undefined && c.courseName !== null ? c.courseName : ''}</td>
+                        <td>${c.courseDuration !== undefined && c.courseDuration !== null ? c.courseDuration : ''}</td>
+                        <td>${c.courseDescription !== undefined && c.courseDescription !== null ? c.courseDescription : ''}</td>
+                        <td>${c.courseStartDate !== undefined && c.courseStartDate !== null ? c.courseStartDate : ''}</td>
+                        <td>${c.courseEndDate !== undefined && c.courseEndDate !== null ? c.courseEndDate : ''}</td>
+                        <td>${c.instructorName !== undefined && c.instructorName !== null ? c.instructorName : ''}</td>
+                        <td>${c.courseFee !== undefined && c.courseFee !== null ? c.courseFee : ''}</td>
+                        <td>${c.maxStudents !== undefined && c.maxStudents !== null ? c.maxStudents : ''}</td>
+                        <td>${c.courseCategory !== undefined && c.courseCategory !== null ? c.courseCategory : ''}</td>
+                    </tr>`;
+                });
+                html += '</table>';
+                list.innerHTML = html;
+            } catch (error) {
+                const list = document.getElementById('courses-list');
+                list.innerHTML = `<p style="color:red">Error: ${error.message}</p>`;
+            }
+        }
+
+        async function addCourse() {
+            const name = document.getElementById('add-course-name').value.trim();
+            const duration = document.getElementById('add-course-duration').value.trim();
+            const description = document.getElementById('add-course-description').value.trim();
+            const startDate = document.getElementById('add-course-start-date').value.trim();
+            const endDate = document.getElementById('add-course-end-date').value.trim();
+            const instructor = document.getElementById('add-course-instructor').value.trim();
+            const feeValue = document.getElementById('add-course-fee').value.trim();
+            const maxStudentsValue = document.getElementById('add-course-max-students').value.trim();
+            const category = document.getElementById('add-course-category').value.trim();
+
+            const fee = parseFloat(feeValue);
+            const maxStudents = parseInt(maxStudentsValue);
+
+            if (!name || !duration || !description || !startDate || !endDate || !instructor || !feeValue || isNaN(fee) || fee < 0 || !maxStudentsValue || isNaN(maxStudents) || maxStudents < 1 || !category) {
+                alert('Please enter all course details.');
+                return;
+            }
+
+            const course = {
+                courseName: name,
+                courseDuration: duration,
+                courseDescription: description,
+                courseStartDate: startDate,
+                courseEndDate: endDate,
+                instructorName: instructor,
+                courseFee: fee,
+                maxStudents: maxStudents,
+                courseCategory: category
+            };
+
+            const response = await fetch('/api/course', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(course)
+            });
+
+            if (response.ok) {
+                alert('Course added!');
+                getCourse();
+            } else {
+                alert('Failed to add course.');
+            }
+        }
+
+        async function updateCourse() {
+            const idValue = document.getElementById('update-course-id').value.trim();
+            const id = parseInt(idValue);
+
+            if (!idValue || isNaN(id) || id <= 0) {
+                alert('Please enter a valid course ID.');
+                return;
+            }
+
+            const name = document.getElementById('update-course-name').value.trim();
+            const duration = document.getElementById('update-course-duration').value.trim();
+            const description = document.getElementById('update-course-description').value.trim();
+            const startDate = document.getElementById('update-course-start-date').value.trim();
+            const endDate = document.getElementById('update-course-end-date').value.trim();
+            const instructor = document.getElementById('update-course-instructor').value.trim();
+            const feeValue = document.getElementById('update-course-fee').value.trim();
+            const maxStudentsValue = document.getElementById('update-course-max-students').value.trim();
+            const category = document.getElementById('update-course-category').value.trim();
+
+            const updateData = {};
+            if (name) updateData.courseName = name;
+            if (duration) updateData.courseDuration = duration;
+            if (description) updateData.courseDescription = description;
+            if (startDate) updateData.courseStartDate = startDate;
+            if (endDate) updateData.courseEndDate = endDate;
+            if (instructor) updateData.instructorName = instructor;
+            if (feeValue) {
+                const fee = parseFloat(feeValue);
+                if (!isNaN(fee) && fee >= 0) updateData.courseFee = fee;
+            }
+            if (maxStudentsValue) {
+                const maxStudents = parseInt(maxStudentsValue);
+                if (!isNaN(maxStudents) && maxStudents > 0) updateData.maxStudents = maxStudents;
+            }
+            if (category) updateData.courseCategory = category;
+
+            if (Object.keys(updateData).length === 0) {
+                alert('Please enter at least one detail to update.');
+                return;
+            }
+
+            const response = await fetch(`/api/course/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateData)
+            });
+
+            if (response.ok) {
+                alert('Course updated!');
+                getCourses();
+            } else {
+                alert('Failed to update course.');
+            }
+        }
+
+        async function deleteCourse() {
+            const idValue = document.getElementById('delete-course-id').value.trim();
+            const id = parseInt(idValue);
+            if (!idValue || isNaN(id) || id <= 0) {
+                alert('Please enter a valid course ID.');
+                return;
+            }
+            if (!confirm('Are you sure you want to delete this course?')) return;
+            const response = await fetch(`/api/course/${id}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                alert('Course deleted!');
+                getCourses();
+            } else {
+                alert('Failed to delete course.');
+            }
+        }
+    </script>
+</head>
+<body>
+<div class="main-wrapper">
+    <h1>Course Management Portal</h1>
+    <div class="flex-row">
+        <div class="card">
+            <h2>View Courses</h2>
+            <button onclick="getCourses()">Show All Courses</button>
+            <div id="courses-list"></div>
+        </div>
+        <div class="card">
+            <h2>Add Course</h2>
+            <label>Course Name</label>
+            <input type="text" id="add-course-name" placeholder="Enter course name">
+            <label>Duration</label>
+            <input type="text" id="add-course-duration" placeholder="Enter duration">
+            <label>Description</label>
+            <input type="text" id="add-course-description" placeholder="Enter description">
+            <label>Start Date</label>
+            <input type="date" id="add-course-start-date" placeholder="Start date">
+            <label>End Date</label>
+            <input type="date" id="add-course-end-date" placeholder="End date">
+            <label>Instructor</label>
+            <input type="text" id="add-course-instructor" placeholder="Enter instructor name">
+            <label>Fee</label>
+            <input type="number" id="add-course-fee" placeholder="Enter fee">
+            <label>Max Students</label>
+            <input type="number" id="add-course-max-students" placeholder="Enter max students">
+            <label>Category</label>
+            <input type="text" id="add-course-category" placeholder="Enter category">
+            <button onclick="addCourse()">Add</button>
+        </div>
+    </div>
+    <div class="flex-row">
+        <div class="card">
+            <h2>Update Course</h2>
+            <label>ID</label>
+            <input type="number" id="update-course-id" placeholder="Course ID">
+            <label>Course Name</label>
+            <input type="text" id="update-course-name" placeholder="New course name">
+            <label>Duration</label>
+            <input type="text" id="update-course-duration" placeholder="New duration">
+            <label>Description</label>
+            <input type="text" id="update-course-description" placeholder="New description">
+            <label>Start Date</label>
+            <input type="date" id="update-course-start-date" placeholder="New start date">
+            <label>End Date</label>
+            <input type="date" id="update-course-end-date" placeholder="New end date">
+            <label>Instructor</label>
+            <input type="text" id="update-course-instructor" placeholder="New instructor name">
+            <label>Fee</label>
+            <input type="number" id="update-course-fee" placeholder="New fee">
+            <label>Max Students</label>
+            <input type="number" id="update-course-max-students" placeholder="New max students">
+            <label>Category</label>
+            <input type="text" id="update-course-category" placeholder="New category">
+            <button onclick="updateCourse()">Update</button>
+        </div>
+        <div class="card">
+            <h2>Delete Course</h2>
+            <label>ID</label>
+            <input type="number" id="delete-course-id" placeholder="Course ID">
+            <button onclick="deleteCourse()">Delete</button>
+        </div>
+    </div>
+</div>
+</body>
+</html>

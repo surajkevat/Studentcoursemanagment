@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Management Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            background: linear-gradient(120deg, #f6d365 0%, #fda085 100%);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .main-wrapper {
+            max-width: 1100px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(60,60,60,0.15);
+            padding: 40px 30px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 32px;
+            letter-spacing: 2px;
+        }
+        .flex-row {
+            display: flex;
+            gap: 32px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .card {
+            background: #f9fafb;
+            border-radius: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            padding: 28px 22px 22px 22px;
+            min-width: 320px;
+            flex: 1 1 340px;
+            max-width: 400px;
+            margin-bottom: 16px;
+        }
+        .card h2 {
+            margin-top: 0;
+            color: #f76b1c;
+            font-size: 1.3em;
+            margin-bottom: 18px;
+            letter-spacing: 1px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            margin-bottom: 4px;
+            color: #444;
+            font-weight: 500;
+        }
+        input[type="text"], input[type="email"], input[type="number"] {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 7px;
+            margin-bottom: 8px;
+            font-size: 1em;
+            background: #fff;
+            transition: border 0.2s;
+        }
+        input[type="text"]:focus, input[type="email"]:focus, input[type="number"]:focus {
+            border: 1.5px solid #f76b1c;
+            outline: none;
+        }
+        button {
+            background: linear-gradient(90deg, #f76b1c 0%, #fad961 100%);
+            color: #fff;
+            border: none;
+            border-radius: 7px;
+            padding: 10px 22px;
+            font-size: 1em;
+            font-weight: 600;
+            margin-top: 12px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(247,107,28,0.08);
+            transition: background 0.2s, transform 0.1s;
+        }
+        button:hover {
+            background: linear-gradient(90deg, #fad961 0%, #f76b1c 100%);
+            transform: translateY(-2px) scale(1.03);
+        }
+        #students-list {
+            margin-top: 18px;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+        }
+        th {
+            background: #f76b1c;
+            color: #fff;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        tr:hover {
+            background: #ffe5c2;
+        }
+        @media (max-width: 900px) {
+            .flex-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            .card {
+                max-width: 100%;
+            }
+        }
+    </style>
+    <script>
+        async function getStudents() {
+            const response = await fetch('/api/students');
+            const students = await response.json();
+            const list = document.getElementById('students-list');
+            if (students.length === 0) {
+                list.innerHTML = '<p style="color:#888;">No students found.</p>';
+                return;
+            }
+            let html = `<table>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone Number</th>
+                    <th>Address</th>
+                    <th>Age</th>
+                    <th>Course Name</th>
+                    <th>Course Duration</th>
+                    <th>Status</th>
+                </tr>`;
+            students.forEach(s => {
+                html += `<tr>
+                    <td>${s.id ?? ''}</td>
+                    <td>${s.name ?? ''}</td>
+                    <td>${s.email ?? ''}</td>
+                    <td>${s.phoneNumber ?? ''}</td>
+                    <td>${s.address ?? ''}</td>
+                    <td>${s.age ?? ''}</td>
+                    <td>${s.courseName ?? ''}</td>
+                    <td>${s.courseDuration ?? ''}</td>
+                    <td>${s.status ?? ''}</td>
+                </tr>`;
+            });
+            html += '</table>';
+            list.innerHTML = html;
+        }
+
+        async function addStudent() {
+            const name = document.getElementById('add-name').value.trim();
+            const email = document.getElementById('add-email').value.trim();
+            const phoneNumber = document.getElementById('add-phone').value.trim();
+            const address = document.getElementById('add-address').value.trim();
+            const ageValue = document.getElementById('add-age').value.trim();
+            const age = parseInt(ageValue);
+            const courseName = document.getElementById('add-course-name').value.trim();
+            const courseDuration = document.getElementById('add-course-duration').value.trim();
+            const status = document.getElementById('add-status').value.trim();
+
+            if (!name || !email || !phoneNumber || !address || !ageValue || isNaN(age) || age <= 0 || !courseName || !courseDuration || !status) {
+                alert('Please enter all student details.');
+                return;
+            }
+
+            const student = { name, email, phoneNumber, address, age, courseName, courseDuration, status };
+
+            const response = await fetch('/api/students', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(student)
+            });
+
+            if (response.ok) {
+                alert('Student added!');
+                getStudents();
+            } else {
+                alert('Failed to add student.');
+            }
+        }
+
+        async function updateStudent() {
+            const idValue = document.getElementById('update-id').value.trim();
+            const id = parseInt(idValue);
+
+            if (!idValue || isNaN(id) || id <= 0) {
+                alert('Please enter a valid student ID.');
+                return;
+            }
+
+            // Collect only fields that are filled in
+            const name = document.getElementById('update-name').value.trim();
+            const email = document.getElementById('update-email').value.trim();
+            const phoneNumber = document.getElementById('update-phone').value.trim();
+            const address = document.getElementById('update-address').value.trim();
+            const ageValue = document.getElementById('update-age').value.trim();
+            const courseName = document.getElementById('update-course-name').value.trim();
+            const courseDuration = document.getElementById('update-course-duration').value.trim();
+            const status = document.getElementById('update-status').value.trim();
+
+            // Build update object with only provided fields
+            const updateData = {};
+            if (name) updateData.name = name;
+            if (email) updateData.email = email;
+            if (phoneNumber) updateData.phoneNumber = phoneNumber;
+            if (address) updateData.address = address;
+            if (ageValue) {
+                const age = parseInt(ageValue);
+                if (!isNaN(age) && age > 0) updateData.age = age;
+            }
+            if (courseName) updateData.courseName = courseName;
+            if (courseDuration) updateData.courseDuration = courseDuration;
+            if (status) updateData.status = status;
+
+            if (Object.keys(updateData).length === 0) {
+                alert('Please enter at least one detail to update.');
+                return;
+            }
+
+            const response = await fetch(`/api/students/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateData)
+            });
+
+            if (response.ok) {
+                alert('Student updated!');
+                getStudents();
+            } else {
+                alert('Failed to update student.');
+            }
+        }
+
+        async function deleteStudent() {
+            const idValue = document.getElementById('delete-id').value.trim();
+            const id = parseInt(idValue);
+            if (!idValue || isNaN(id) || id <= 0) {
+                alert('Please enter a valid student ID.');
+                return;
+            }
+            if (!confirm('Are you sure you want to delete this student?')) return;
+            const response = await fetch(`/api/students/${id}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                alert('Student deleted!');
+                getStudents();
+            } else {
+                alert('Failed to delete student.');
+            }
+        }
+    </script>
+</head>
+<body>
+<div class="main-wrapper">
+    <h1>Student Management Portal</h1>
+    <div class="flex-row">
+        <div class="card">
+            <h2>View Students</h2>
+            <button onclick="getStudents()">Show All Students</button>
+            <div id="students-list"></div>
+        </div>
+        <div class="card">
+            <h2>Add Student</h2>
+            <label>Name</label>
+            <input type="text" id="add-name" placeholder="Enter name">
+            <label>Email</label>
+            <input type="email" id="add-email" placeholder="Enter email">
+            <label>Phone Number</label>
+            <input type="text" id="add-phone" placeholder="Enter phone number">
+            <label>Address</label>
+            <input type="text" id="add-address" placeholder="Enter address">
+            <label>Age</label>
+            <input type="number" id="add-age" placeholder="Enter age">
+            <label>Course Name</label>
+            <input type="text" id="add-course-name" placeholder="Enter course name">
+            <label>Course Duration</label>
+            <input type="text" id="add-course-duration" placeholder="Enter duration">
+            <label>Status</label>
+            <input type="text" id="add-status" placeholder="Enter status (e.g. ACTIVE)">
+            <button onclick="addStudent()">Add</button>
+        </div>
+    </div>
+    <div class="flex-row">
+        <div class="card">
+            <h2>Update Student</h2>
+            <label>ID</label>
+            <input type="number" id="update-id" placeholder="Student ID">
+            <label>Name</label>
+            <input type="text" id="update-name" placeholder="New name">
+            <label>Email</label>
+            <input type="email" id="update-email" placeholder="New email">
+            <label>Phone Number</label>
+            <input type="text" id="update-phone" placeholder="New phone number">
+            <label>Address</label>
+            <input type="text" id="update-address" placeholder="New address">
+            <label>Age</label>
+            <input type="number" id="update-age" placeholder="New age">
+            <label>Course Name</label>
+            <input type="text" id="update-course-name" placeholder="New course name">
+            <label>Course Duration</label>
+            <input type="text" id="update-course-duration" placeholder="New duration">
+            <label>Status</label>
+            <input type="text" id="update-status" placeholder="New status">
+            <button onclick="updateStudent()">Update</button>
+        </div>
+        <div class="card">
+            <h2>Delete Student</h2>
+            <label>ID</label>
+            <input type="number" id="delete-id" placeholder="Student ID">
+            <button onclick="deleteStudent()">Delete</button>
+        </div>
+    </div>
+</div>
+</body>
+</html>
